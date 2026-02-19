@@ -1,143 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Google Login App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body{
-      font-family: Arial;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-      background:#f0f2f5;
-      margin:0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANIKING - Edit Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --card-bg: rgba(20, 20, 20, 0.95);
+            --accent-cyan: #00f2ff;
+            --text-main: #ffffff;
+        }
 
-    .card{
-      background:white;
-      padding:30px;
-      border-radius:15px;
-      width:320px;
-      text-align:center;
-      box-shadow:0 5px 20px rgba(0,0,0,0.1);
-    }
+        body { 
+            font-family: 'Inter', sans-serif; background-color: var(--bg-dark);
+            display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; color: var(--text-main);
+        }
 
-    button{
-      width:100%;
-      padding:12px;
-      border:none;
-      border-radius:8px;
-      background:#4285F4;
-      color:white;
-      font-size:16px;
-      cursor:pointer;
-      margin-top:10px;
-    }
+        .card { 
+            background: var(--card-bg); padding: 25px; border-radius: 15px; 
+            border: 1px solid rgba(0, 242, 255, 0.2); width: 90%; max-width: 380px; text-align: center;
+        }
 
-    #profile{
-      display:none;
-    }
+        .hidden { display: none !important; }
+        h3 { font-family: 'Orbitron', sans-serif; color: var(--accent-cyan); margin-bottom: 20px; }
 
-    #profile img{
-      width:120px;
-      height:120px;
-      border-radius:50%;
-      object-fit:cover;
-      margin-bottom:10px;
-      border:3px solid #4285F4;
-    }
+        #main-avatar { 
+            width: 90px; height: 90px; border-radius: 50%; 
+            border: 2px solid var(--accent-cyan); object-fit: cover;
+            box-shadow: 0 0 15px var(--accent-cyan); margin-bottom: 10px;
+        }
 
-    input{
-      width:90%;
-      padding:8px;
-      margin:5px 0;
-      border-radius:6px;
-      border:1px solid #ccc;
-    }
-  </style>
+        /* Avatar Selection Grid */
+        .avatar-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+            margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;
+        }
+
+        .avatar-option {
+            width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent;
+            cursor: pointer; transition: 0.2s; opacity: 0.6;
+        }
+
+        .avatar-option:hover { opacity: 1; transform: scale(1.1); }
+        .avatar-option.selected { border-color: var(--accent-cyan); opacity: 1; box-shadow: 0 0 10px var(--accent-cyan); }
+
+        input { 
+            width: 100%; padding: 12px; margin: 10px 0; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; box-sizing: border-box; 
+        }
+
+        button { 
+            width: 100%; padding: 14px; border: none; border-radius: 6px; 
+            cursor: pointer; font-weight: bold; margin-top: 10px; text-transform: uppercase;
+        }
+        
+        .btn-primary { background: var(--accent-cyan); color: #000; }
+        .btn-edit { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); margin-top: 20px;}
+    </style>
 </head>
 <body>
 
-<div class="card" id="loginCard">
-  <h2>Login</h2>
-  <button onclick="googleLogin()">Sign in with Google</button>
-</div>
+    <div id="profile-card" class="card">
+        <h3>User Account</h3>
+        <img id="main-avatar" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
+        <div id="display-name" style="font-weight: 700; font-size: 1.3rem;">Loading...</div>
+        <div id="display-email" style="font-size: 0.8rem; color: #777; margin-bottom: 10px;">---</div>
 
-<div class="card" id="profile">
-  <h2>Profile</h2>
-  <img id="photo">
-  <input type="text" id="username">
-  <button onclick="saveName()">Save Name</button>
-  <button onclick="logout()">Logout</button>
-</div>
+        <div id="edit-box" class="hidden" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 15px;">
+            <p style="font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 5px;">SELECT CHARACTER</p>
+            
+            <div class="avatar-grid" id="avatar-selector">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Felix" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Felix">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Zoro" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Zoro">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Mimi" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Mimi">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Buster" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Buster">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Sasha" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Sasha">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Midnight" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Midnight">
+                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Leo" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Leo">
+            </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+            <input type="text" id="edit-name-input" placeholder="New Display Name">
+            <button id="save-btn" class="btn-primary">Update Profile</button>
+        </div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
-  authDomain: "tff-earns.firebaseapp.com",
-  projectId: "tff-earns",
-  storageBucket: "tff-earns.firebasestorage.app",
-  messagingSenderId: "762695597074",
-  appId: "1:762695597074:web:bd7a8df2df2806d5b26ccb"
-};
+        <button id="toggle-edit-btn" class="btn-edit">Edit Profile</button>
+        <button id="logout-btn" style="background:none; color:#ff4b2b; font-size:0.8rem; border:none; margin-top:15px;">Logout Account</button>
+    </div>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-window.googleLogin = async function(){
-  try{
-    await signInWithPopup(auth, provider);
-  }catch(error){
-    alert(error.message);
-  }
-}
+        const firebaseConfig = {
+            apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
+            authDomain: "tff-earns.firebaseapp.com",
+            projectId: "tff-earns",
+            storageBucket: "tff-earns.firebasestorage.app",
+            messagingSenderId: "762695597074",
+            appId: "1:762695597074:web:bd7a8df2df2806d5b26ccb"
+        };
 
-onAuthStateChanged(auth, async (user)=>{
-  if(user){
-    loginCard.style.display="none";
-    profile.style.display="block";
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-    photo.src = user.photoURL;
+        let selectedAvatarUrl = "";
 
-    const userRef = doc(db,"users",user.uid);
-    const docSnap = await getDoc(userRef);
+        // Check Auth
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('display-name').innerText = user.displayName || "Anime Fan";
+                document.getElementById('display-email').innerText = user.email;
+                document.getElementById('main-avatar').src = user.photoURL || "https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky";
+                selectedAvatarUrl = user.photoURL;
+            } else {
+                alert("Please login first!");
+                // window.location.href = "login.html"; 
+            }
+        });
 
-    if(!docSnap.exists()){
-      await setDoc(userRef,{
-        username: user.displayName,
-        email: user.email
-      });
-      username.value = user.displayName;
-    }else{
-      username.value = docSnap.data().username;
-    }
+        // Handle Avatar Selection
+        document.querySelectorAll('.avatar-option').forEach(img => {
+            img.onclick = function() {
+                document.querySelectorAll('.avatar-option').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedAvatarUrl = this.dataset.url;
+            };
+        });
 
-  }else{
-    loginCard.style.display="block";
-    profile.style.display="none";
-  }
-});
+        // Show/Hide Edit Box
+        document.getElementById('toggle-edit-btn').onclick = function() {
+            document.getElementById('edit-box').classList.toggle('hidden');
+            this.innerText = document.getElementById('edit-box').classList.contains('hidden') ? "Edit Profile" : "Cancel Edit";
+        };
 
-window.saveName = async function(){
-  const user = auth.currentUser;
-  await setDoc(doc(db,"users",user.uid),{
-    username: username.value,
-    email: user.email
-  });
-  alert("Saved Successfully");
-}
+        // Save Logic
+        document.getElementById('save-btn').onclick = async () => {
+            const user = auth.currentUser;
+            const newName = document.getElementById('edit-name-input').value;
 
-window.logout = function(){
-  signOut(auth);
-}
-</script>
+            try {
+                await updateProfile(user, {
+                    displayName: newName || user.displayName,
+                    photoURL: selectedAvatarUrl
+                });
+                alert("Profile Updated Successfully!");
+                location.reload();
+            } catch (e) {
+                alert(e.message);
+            }
+        };
 
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+    </script>
 </body>
 </html>
