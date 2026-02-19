@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Profile Page</title>
 <style>
 body {
@@ -10,9 +10,11 @@ body {
   font-family: Arial, sans-serif;
   background: linear-gradient(135deg,#f0f3f7,#d9e2ec);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding-top: 50px;
 }
 .container {
   display: flex;
@@ -22,10 +24,12 @@ body {
   padding: 30px;
   border-radius: 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  width: 90%;
+  max-width: 400px;
 }
 input {
   padding: 12px;
-  width: 250px;
+  width: 100%;
   margin: 8px 0;
   border-radius: 10px;
   border: 1px solid #ccc;
@@ -38,14 +42,16 @@ button {
   border: none;
   color: white;
   cursor: pointer;
+  width: 100%;
 }
 .btn-create { background: #FF6F61; }
 .btn-login { background: #4CAF50; }
-.link { cursor:pointer; color:#FF6F61; margin-top:10px; }
-h2 { margin-bottom: 20px; }
+.link { cursor:pointer; color:#FF6F61; margin-top:10px; text-align:center; }
+h2 { margin-bottom: 20px; text-align:center; }
 </style>
 </head>
 <body>
+
 <div class="container">
 
 <!-- Welcome -->
@@ -56,7 +62,7 @@ h2 { margin-bottom: 20px; }
 
 <!-- Create Account -->
 <div id="createDiv" style="display:none;">
-  <h2 style="color:#FF6F61;">Create Account</h2>
+  <h2>Create Account</h2>
   <input id="createEmail" type="email" placeholder="Email"><br>
   <input id="createPass" type="password" placeholder="Password"><br>
   <button class="btn-create" onclick="createAccount()">Create</button>
@@ -65,7 +71,7 @@ h2 { margin-bottom: 20px; }
 
 <!-- Login -->
 <div id="loginDiv" style="display:none;">
-  <h2 style="color:#4CAF50;">Login</h2>
+  <h2>Login</h2>
   <input id="loginEmail" type="email" placeholder="Email"><br>
   <input id="loginPass" type="password" placeholder="Password"><br>
   <button class="btn-login" onclick="loginUser()">Login</button>
@@ -75,21 +81,21 @@ h2 { margin-bottom: 20px; }
 
 <!-- Profile -->
 <div id="profileDiv" style="display:none;">
-  <h2 style="color:#333;">Profile</h2>
+  <h2>Profile</h2>
   <p>Email: <span id="profileEmail"></span></p>
-  <p>Unique ID: <span id="profileUID"></span></p>
+  <p>UID: <span id="profileUID"></span></p>
   <button class="btn-create" onclick="logout()">Logout</button>
 </div>
 
-<!-- Firebase JS SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js"></script>
+<!-- Firebase v9 compat -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <script>
 // Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
+  apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2JUHtMg-TY",
   authDomain: "tff-earns.firebaseapp.com",
   databaseURL: "https://tff-earns-default-rtdb.firebaseio.com",
   projectId: "tff-earns",
@@ -100,7 +106,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 
-// Show / Hide Divs
+// Show/Hide Divs
 function showCreate(){ hideAll(); document.getElementById('createDiv').style.display='flex'; }
 function showLogin(){ hideAll(); document.getElementById('loginDiv').style.display='flex'; }
 function backToWelcome(){ hideAll(); document.getElementById('welcomeDiv').style.display='flex'; }
@@ -115,12 +121,12 @@ function hideAll(){
 function createAccount(){
   var email = document.getElementById('createEmail').value;
   var pass = document.getElementById('createPass').value;
-  if(!email||!pass){ alert('Enter email and password'); return; }
+  if(!email || !pass){ alert('Enter email and password'); return; }
   firebase.auth().createUserWithEmailAndPassword(email,pass)
-  .then((userCredential)=>{
+  .then(userCredential=>{
     var uid = userCredential.user.uid;
-    localStorage.setItem('uid',uid);
-    localStorage.setItem('email',email);
+    localStorage.setItem('uid', uid);
+    localStorage.setItem('email', email);
     firebase.database().ref('Users/'+uid).set({email:email,lastSeen:new Date().toISOString()});
     loadProfile(uid,email);
   })
@@ -131,19 +137,19 @@ function createAccount(){
 function loginUser(){
   var email = document.getElementById('loginEmail').value;
   var pass = document.getElementById('loginPass').value;
-  if(!email||!pass){ alert('Enter email and password'); return; }
+  if(!email || !pass){ alert('Enter email and password'); return; }
   firebase.auth().signInWithEmailAndPassword(email,pass)
-  .then((userCredential)=>{
+  .then(userCredential=>{
     var uid = userCredential.user.uid;
-    localStorage.setItem('uid',uid);
-    localStorage.setItem('email',email);
+    localStorage.setItem('uid', uid);
+    localStorage.setItem('email', email);
     firebase.database().ref('Users/'+uid+'/lastSeen').set(new Date().toISOString());
     loadProfile(uid,email);
   })
   .catch(err=>alert(err.message));
 }
 
-// Forgot Password
+// Forgot password
 function forgotPassword(){
   var email = prompt('Enter your registered email:');
   if(email){
@@ -153,7 +159,7 @@ function forgotPassword(){
   }
 }
 
-// Load Profile
+// Load profile
 function loadProfile(uid,email){
   hideAll();
   document.getElementById('profileDiv').style.display='flex';
@@ -169,7 +175,7 @@ function logout(){
   backToWelcome();
 }
 
-// Check localStorage on page load
+// Check localStorage on load
 window.onload = function(){
   var uid = localStorage.getItem('uid');
   var email = localStorage.getItem('email');
