@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile Page</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#f0f3f7,#d9e2ec);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+input {
+  padding: 12px;
+  width: 250px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+button {
+  margin: 10px;
+  padding: 15px 30px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+.btn-create { background: #FF6F61; }
+.btn-login { background: #4CAF50; }
+.link { cursor:pointer; color:#FF6F61; margin-top:10px; }
+h2 { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Welcome -->
+<div id="welcomeDiv">
+  <button class="btn-create" onclick="showCreate()">Create Account</button>
+  <button class="btn-login" onclick="showLogin()">Login</button>
+</div>
+
+<!-- Create Account -->
+<div id="createDiv" style="display:none;">
+  <h2 style="color:#FF6F61;">Create Account</h2>
+  <input id="createEmail" type="email" placeholder="Email"><br>
+  <input id="createPass" type="password" placeholder="Password"><br>
+  <button class="btn-create" onclick="createAccount()">Create</button>
+  <p class="link" onclick="backToWelcome()">Back</p>
+</div>
+
+<!-- Login -->
+<div id="loginDiv" style="display:none;">
+  <h2 style="color:#4CAF50;">Login</h2>
+  <input id="loginEmail" type="email" placeholder="Email"><br>
+  <input id="loginPass" type="password" placeholder="Password"><br>
+  <button class="btn-login" onclick="loginUser()">Login</button>
+  <p class="link" onclick="forgotPassword()">Forgot Password?</p>
+  <p class="link" onclick="backToWelcome()">Back</p>
+</div>
+
+<!-- Profile -->
+<div id="profileDiv" style="display:none;">
+  <h2 style="color:#333;">Profile</h2>
+  <p>Email: <span id="profileEmail"></span></p>
+  <p>Unique ID: <span id="profileUID"></span></p>
+  <button class="btn-create" onclick="logout()">Logout</button>
+</div>
+
+<!-- Firebase JS SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js"></script>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
+  authDomain: "tff-earns.firebaseapp.com",
+  databaseURL: "https://tff-earns-default-rtdb.firebaseio.com",
+  projectId: "tff-earns",
+  storageBucket: "tff-earns.firebasestorage.app",
+  messagingSenderId: "762695597074",
+  appId: "1:762695597074:web:bd7a8df2df2806d5b26ccb",
+  measurementId: "G-N1JVN1LZZC"
+};
+firebase.initializeApp(firebaseConfig);
+
+// Show / Hide Divs
+function showCreate(){ hideAll(); document.getElementById('createDiv').style.display='flex'; }
+function showLogin(){ hideAll(); document.getElementById('loginDiv').style.display='flex'; }
+function backToWelcome(){ hideAll(); document.getElementById('welcomeDiv').style.display='flex'; }
+function hideAll(){
+  document.getElementById('welcomeDiv').style.display='none';
+  document.getElementById('createDiv').style.display='none';
+  document.getElementById('loginDiv').style.display='none';
+  document.getElementById('profileDiv').style.display='none';
+}
+
+// Create Account
+function createAccount(){
+  var email = document.getElementById('createEmail').value;
+  var pass = document.getElementById('createPass').value;
+  if(!email||!pass){ alert('Enter email and password'); return; }
+  firebase.auth().createUserWithEmailAndPassword(email,pass)
+  .then((userCredential)=>{
+    var uid = userCredential.user.uid;
+    localStorage.setItem('uid',uid);
+    localStorage.setItem('email',email);
+    firebase.database().ref('Users/'+uid).set({email:email,lastSeen:new Date().toISOString()});
+    loadProfile(uid,email);
+  })
+  .catch(err=>alert(err.message));
+}
+
+// Login
+function loginUser(){
+  var email = document.getElementById('loginEmail').value;
+  var pass = document.getElementById('loginPass').value;
+  if(!email||!pass){ alert('Enter email and password'); return; }
+  firebase.auth().signInWithEmailAndPassword(email,pass)
+  .then((userCredential)=>{
+    var uid = userCredential.user.uid;
+    localStorage.setItem('uid',uid);
+    localStorage.setItem('email',email);
+    firebase.database().ref('Users/'+uid+'/lastSeen').set(new Date().toISOString());
+    loadProfile(uid,email);
+  })
+  .catch(err=>alert(err.message));
+}
+
+// Forgot Password
+function forgotPassword(){
+  var email = prompt('Enter your registered email:');
+  if(email){
+    firebase.auth().sendPasswordResetEmail(email)
+    .then(()=>alert('Reset link sent to email'))
+    .catch(err=>alert(err.message));
+  }
+}
+
+// Load Profile
+function loadProfile(uid,email){
+  hideAll();
+  document.getElementById('profileDiv').style.display='flex';
+  document.getElementById('profileEmail').innerText=email;
+  document.getElementById('profileUID').innerText=uid;
+}
+
+// Logout
+function logout(){
+  localStorage.removeItem('uid');
+  localStorage.removeItem('email');
+  firebase.auth().signOut();
+  backToWelcome();
+}
+
+// Check localStorage on page load
+window.onload = function(){
+  var uid = localStorage.getItem('uid');
+  var email = localStorage.getItem('email');
+  if(uid && email){
+    loadProfile(uid,email);
+  } else {
+    backToWelcome();
+  }
+};
+</script>
+</body>
+</html>
