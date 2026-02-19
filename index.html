@@ -1,94 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Login App</title>
+  <title>Google Login App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
+    body{
       font-family: Arial;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #f0f2f5;
-      margin: 0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      background:#f0f2f5;
+      margin:0;
     }
 
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      width: 320px;
-      text-align: center;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    .card{
+      background:white;
+      padding:30px;
+      border-radius:15px;
+      width:320px;
+      text-align:center;
+      box-shadow:0 5px 20px rgba(0,0,0,0.1);
     }
 
-    input {
-      width: 90%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+    button{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:8px;
+      background:#4285F4;
+      color:white;
+      font-size:16px;
+      cursor:pointer;
+      margin-top:10px;
     }
 
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #1877f2;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
+    #profile{
+      display:none;
     }
 
-    #profile {
-      display: none;
+    #profile img{
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      object-fit:cover;
+      margin-bottom:10px;
+      border:3px solid #4285F4;
     }
 
-    #profile img {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      object-fit: cover;
-      cursor: pointer;
-      border: 3px solid #1877f2;
+    input{
+      width:90%;
+      padding:8px;
+      margin:5px 0;
+      border-radius:6px;
+      border:1px solid #ccc;
     }
   </style>
 </head>
 <body>
 
-<div class="container" id="auth">
+<div class="card" id="loginCard">
   <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="login()">Login</button>
-  <p onclick="showSignup()" style="color:blue;cursor:pointer;">
-    Create New Account
-  </p>
+  <button onclick="googleLogin()">Sign in with Google</button>
 </div>
 
-<div class="container" id="signup" style="display:none;">
-  <h2>Create Account</h2>
-  <input type="email" id="signupEmail" placeholder="Email"><br>
-  <input type="password" id="signupPassword" placeholder="Password"><br>
-  <button onclick="signup()">Create</button>
-</div>
-
-<div class="container" id="profile">
+<div class="card" id="profile">
   <h2>Profile</h2>
-  <img id="profileImage" src="https://via.placeholder.com/120" onclick="uploadImage()">
-  <input type="file" id="imageInput" style="display:none" accept="image/*">
+  <img id="photo">
   <input type="text" id="username">
-  <button onclick="saveProfile()">Save</button>
+  <button onclick="saveName()">Save Name</button>
   <button onclick="logout()">Logout</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
@@ -102,70 +89,53 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+const provider = new GoogleAuthProvider();
 
-window.showSignup = function() {
-  document.getElementById("auth").style.display="none";
-  document.getElementById("signup").style.display="block";
-}
-
-window.signup = async function() {
-  const email = signupEmail.value;
-  const password = signupPassword.value;
-  const userCredential = await createUserWithEmailAndPassword(auth,email,password);
-  await setDoc(doc(db,"users",userCredential.user.uid),{
-    username: email,
-    photoURL: ""
-  });
-}
-
-window.login = async function() {
-  await signInWithEmailAndPassword(auth,email.value,password.value);
+window.googleLogin = async function(){
+  try{
+    await signInWithPopup(auth, provider);
+  }catch(error){
+    alert(error.message);
+  }
 }
 
 onAuthStateChanged(auth, async (user)=>{
   if(user){
-    auth.style.display="none";
-    signup.style.display="none";
+    loginCard.style.display="none";
     profile.style.display="block";
 
-    const docSnap = await getDoc(doc(db,"users",user.uid));
-    if(docSnap.exists()){
+    photo.src = user.photoURL;
+
+    const userRef = doc(db,"users",user.uid);
+    const docSnap = await getDoc(userRef);
+
+    if(!docSnap.exists()){
+      await setDoc(userRef,{
+        username: user.displayName,
+        email: user.email
+      });
+      username.value = user.displayName;
+    }else{
       username.value = docSnap.data().username;
-      if(docSnap.data().photoURL){
-        profileImage.src = docSnap.data().photoURL;
-      }
     }
+
+  }else{
+    loginCard.style.display="block";
+    profile.style.display="none";
   }
 });
 
-window.uploadImage = function(){
-  imageInput.click();
-}
-
-imageInput.addEventListener("change", async ()=>{
-  const file = imageInput.files[0];
-  const storageRef = ref(storage,"profiles/"+auth.currentUser.uid);
-  await uploadBytes(storageRef,file);
-  const url = await getDownloadURL(storageRef);
-  profileImage.src = url;
-  await setDoc(doc(db,"users",auth.currentUser.uid),{
+window.saveName = async function(){
+  const user = auth.currentUser;
+  await setDoc(doc(db,"users",user.uid),{
     username: username.value,
-    photoURL: url
+    email: user.email
   });
-});
-
-window.saveProfile = async function(){
-  await setDoc(doc(db,"users",auth.currentUser.uid),{
-    username: username.value,
-    photoURL: profileImage.src
-  });
-  alert("Profile Updated");
+  alert("Saved Successfully");
 }
 
 window.logout = function(){
   signOut(auth);
-  location.reload();
 }
 </script>
 
