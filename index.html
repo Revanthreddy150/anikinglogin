@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANIKING - Edit Profile</title>
+    <title>ANIKING - Secure Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -16,23 +16,24 @@
         body { 
             font-family: 'Inter', sans-serif; background-color: var(--bg-dark);
             display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; color: var(--text-main);
+            background-image: radial-gradient(circle at 50% 50%, #101a20 0%, #050505 100%);
         }
 
         .card { 
-            background: var(--card-bg); padding: 25px; border-radius: 15px; 
+            background: var(--card-bg); padding: 30px; border-radius: 15px; 
             border: 1px solid rgba(0, 242, 255, 0.2); width: 90%; max-width: 380px; text-align: center;
+            backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .hidden { display: none !important; }
-        h3 { font-family: 'Orbitron', sans-serif; color: var(--accent-cyan); margin-bottom: 20px; }
+        h2, h3 { font-family: 'Orbitron', sans-serif; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 2px; }
 
         #main-avatar { 
             width: 90px; height: 90px; border-radius: 50%; 
             border: 2px solid var(--accent-cyan); object-fit: cover;
-            box-shadow: 0 0 15px var(--accent-cyan); margin-bottom: 10px;
+            box-shadow: 0 0 15px var(--accent-cyan); margin-bottom: 15px;
         }
 
-        /* Avatar Selection Grid */
         .avatar-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
             margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;
@@ -43,7 +44,6 @@
             cursor: pointer; transition: 0.2s; opacity: 0.6;
         }
 
-        .avatar-option:hover { opacity: 1; transform: scale(1.1); }
         .avatar-option.selected { border-color: var(--accent-cyan); opacity: 1; box-shadow: 0 0 10px var(--accent-cyan); }
 
         input { 
@@ -56,43 +56,52 @@
             cursor: pointer; font-weight: bold; margin-top: 10px; text-transform: uppercase;
         }
         
-        .btn-primary { background: var(--accent-cyan); color: #000; }
+        .btn-primary { background: var(--accent-cyan); color: #000; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
         .btn-edit { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); margin-top: 20px;}
+        .btn-logout { background: none; color: #ff4b2b; font-size: 0.8rem; border: none; margin-top: 15px; }
+
+        #loader { font-family: 'Orbitron'; color: var(--accent-cyan); }
     </style>
 </head>
 <body>
 
-    <div id="profile-card" class="card">
-        <h3>User Account</h3>
+    <div id="loader">INITIALIZING SYSTEM...</div>
+
+    <div id="auth-card" class="card hidden">
+        <h2>Access Portal</h2>
+        <input type="email" id="email" placeholder="EMAIL ADDRESS">
+        <input type="password" id="password" placeholder="PASSWORD">
+        <button id="login-btn" class="btn-primary">LOGIN</button>
+        <button id="signup-btn" class="btn-primary hidden">CREATE ACCOUNT</button>
+        <div id="toggle-text" style="cursor:pointer; margin-top:15px; font-size:0.8rem; color: #888;">New User? Register</div>
+        <div id="forgot-password" style="cursor:pointer; margin-top:10px; font-size:0.75rem; color: #666;">Forgot Password?</div>
+    </div>
+
+    <div id="profile-card" class="card hidden">
+        <h3>User Profile</h3>
         <img id="main-avatar" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
-        <div id="display-name" style="font-weight: 700; font-size: 1.3rem;">Loading...</div>
+        <div id="display-name" style="font-weight: 700; font-size: 1.3rem;">---</div>
         <div id="display-email" style="font-size: 0.8rem; color: #777; margin-bottom: 10px;">---</div>
 
         <div id="edit-box" class="hidden" style="border-top: 1px solid #333; padding-top: 15px; margin-top: 15px;">
-            <p style="font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 5px;">SELECT CHARACTER</p>
-            
+            <p style="font-size: 0.7rem; color: var(--accent-cyan);">SELECT AVATAR</p>
             <div class="avatar-grid" id="avatar-selector">
                 <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Felix" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Felix">
                 <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka">
                 <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Zoro" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Zoro">
-                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Mimi" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Mimi">
-                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Buster" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Buster">
-                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Sasha" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Sasha">
-                <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Midnight" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Midnight">
                 <img class="avatar-option" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Leo" data-url="https://api.dicebear.com/7.x/adventurer/svg?seed=Leo">
             </div>
-
-            <input type="text" id="edit-name-input" placeholder="New Display Name">
-            <button id="save-btn" class="btn-primary">Update Profile</button>
+            <input type="text" id="edit-name-input" placeholder="New Name">
+            <button id="save-btn" class="btn-primary">Save Changes</button>
         </div>
 
         <button id="toggle-edit-btn" class="btn-edit">Edit Profile</button>
-        <button id="logout-btn" style="background:none; color:#ff4b2b; font-size:0.8rem; border:none; margin-top:15px;">Logout Account</button>
+        <button id="logout-btn" class="btn-logout">Logout Account</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, updateProfile, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
@@ -105,23 +114,39 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-
         let selectedAvatarUrl = "";
 
-        // Check Auth
+        // UI Selectors
+        const loader = document.getElementById('loader');
+        const authCard = document.getElementById('auth-card');
+        const profileCard = document.getElementById('profile-card');
+
+        // Monitor Auth State
         onAuthStateChanged(auth, (user) => {
+            loader.classList.add('hidden');
             if (user) {
-                document.getElementById('display-name').innerText = user.displayName || "Anime Fan";
+                authCard.classList.add('hidden');
+                profileCard.classList.remove('hidden');
+                document.getElementById('display-name').innerText = user.displayName || "ANIME FAN";
                 document.getElementById('display-email').innerText = user.email;
                 document.getElementById('main-avatar').src = user.photoURL || "https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky";
                 selectedAvatarUrl = user.photoURL;
             } else {
-                alert("Please login first!");
-                // window.location.href = "login.html"; 
+                authCard.classList.remove('hidden');
+                profileCard.classList.add('hidden');
             }
         });
 
-        // Handle Avatar Selection
+        // Auth Actions
+        document.getElementById('login-btn').onclick = () => {
+            signInWithEmailAndPassword(auth, email.value, password.value).catch(e => alert(e.message));
+        };
+        document.getElementById('signup-btn').onclick = () => {
+            createUserWithEmailAndPassword(auth, email.value, password.value).catch(e => alert(e.message));
+        };
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
+
+        // Avatar Select Logic
         document.querySelectorAll('.avatar-option').forEach(img => {
             img.onclick = function() {
                 document.querySelectorAll('.avatar-option').forEach(i => i.classList.remove('selected'));
@@ -130,30 +155,28 @@
             };
         });
 
-        // Show/Hide Edit Box
-        document.getElementById('toggle-edit-btn').onclick = function() {
-            document.getElementById('edit-box').classList.toggle('hidden');
-            this.innerText = document.getElementById('edit-box').classList.contains('hidden') ? "Edit Profile" : "Cancel Edit";
-        };
-
-        // Save Logic
+        // Update Profile
         document.getElementById('save-btn').onclick = async () => {
             const user = auth.currentUser;
             const newName = document.getElementById('edit-name-input').value;
-
             try {
-                await updateProfile(user, {
-                    displayName: newName || user.displayName,
-                    photoURL: selectedAvatarUrl
-                });
-                alert("Profile Updated Successfully!");
+                await updateProfile(user, { displayName: newName || user.displayName, photoURL: selectedAvatarUrl });
+                alert("Profile Updated!");
                 location.reload();
-            } catch (e) {
-                alert(e.message);
-            }
+            } catch (e) { alert(e.message); }
         };
 
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
+        // UI Toggles
+        document.getElementById('toggle-edit-btn').onclick = function() {
+            document.getElementById('edit-box').classList.toggle('hidden');
+            this.innerText = document.getElementById('edit-box').classList.contains('hidden') ? "Edit Profile" : "Cancel";
+        };
+        document.getElementById('toggle-text').onclick = function() {
+            const isLogin = !document.getElementById('login-btn').classList.contains('hidden');
+            document.getElementById('login-btn').classList.toggle('hidden');
+            document.getElementById('signup-btn').classList.toggle('hidden');
+            this.innerText = isLogin ? "Have an account? Login" : "New User? Register";
+        };
     </script>
 </body>
 </html>
