@@ -1,190 +1,173 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Profile Page</title>
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg,#f0f3f7,#d9e2ec);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  padding-top: 50px;
-}
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  width: 90%;
-  max-width: 400px;
-}
-input {
-  padding: 12px;
-  width: 100%;
-  margin: 8px 0;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-}
-button {
-  margin: 10px;
-  padding: 15px 30px;
-  font-size: 16px;
-  border-radius: 10px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  width: 100%;
-}
-.btn-create { background: #FF6F61; }
-.btn-login { background: #4CAF50; }
-.link { cursor:pointer; color:#FF6F61; margin-top:10px; text-align:center; }
-h2 { margin-bottom: 20px; text-align:center; }
-</style>
+  <title>Login App</title>
+  <style>
+    body {
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f0f2f5;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #1877f2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #profile {
+      display: none;
+    }
+
+    #profile img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+      border: 3px solid #1877f2;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-
-<!-- Welcome -->
-<div id="welcomeDiv">
-  <button class="btn-create" onclick="showCreate()">Create Account</button>
-  <button class="btn-login" onclick="showLogin()">Login</button>
-</div>
-
-<!-- Create Account -->
-<div id="createDiv" style="display:none;">
-  <h2>Create Account</h2>
-  <input id="createEmail" type="email" placeholder="Email"><br>
-  <input id="createPass" type="password" placeholder="Password"><br>
-  <button class="btn-create" onclick="createAccount()">Create</button>
-  <p class="link" onclick="backToWelcome()">Back</p>
-</div>
-
-<!-- Login -->
-<div id="loginDiv" style="display:none;">
+<div class="container" id="auth">
   <h2>Login</h2>
-  <input id="loginEmail" type="email" placeholder="Email"><br>
-  <input id="loginPass" type="password" placeholder="Password"><br>
-  <button class="btn-login" onclick="loginUser()">Login</button>
-  <p class="link" onclick="forgotPassword()">Forgot Password?</p>
-  <p class="link" onclick="backToWelcome()">Back</p>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <p onclick="showSignup()" style="color:blue;cursor:pointer;">
+    Create New Account
+  </p>
 </div>
 
-<!-- Profile -->
-<div id="profileDiv" style="display:none;">
+<div class="container" id="signup" style="display:none;">
+  <h2>Create Account</h2>
+  <input type="email" id="signupEmail" placeholder="Email"><br>
+  <input type="password" id="signupPassword" placeholder="Password"><br>
+  <button onclick="signup()">Create</button>
+</div>
+
+<div class="container" id="profile">
   <h2>Profile</h2>
-  <p>Email: <span id="profileEmail"></span></p>
-  <p>UID: <span id="profileUID"></span></p>
-  <button class="btn-create" onclick="logout()">Logout</button>
+  <img id="profileImage" src="https://via.placeholder.com/120" onclick="uploadImage()">
+  <input type="file" id="imageInput" style="display:none" accept="image/*">
+  <input type="text" id="username">
+  <button onclick="saveProfile()">Save</button>
+  <button onclick="logout()">Logout</button>
 </div>
 
-<!-- Firebase v9 compat -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-<script>
-// Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2JUHtMg-TY",
+  apiKey: "AIzaSyArqJycgZtlLpM7KQ2T9h-e2eJUHtMg-TY",
   authDomain: "tff-earns.firebaseapp.com",
-  databaseURL: "https://tff-earns-default-rtdb.firebaseio.com",
   projectId: "tff-earns",
   storageBucket: "tff-earns.firebasestorage.app",
   messagingSenderId: "762695597074",
-  appId: "1:762695597074:web:bd7a8df2df2806d5b26ccb",
-  measurementId: "G-N1JVN1LZZC"
+  appId: "1:762695597074:web:bd7a8df2df2806d5b26ccb"
 };
-firebase.initializeApp(firebaseConfig);
 
-// Show/Hide Divs
-function showCreate(){ hideAll(); document.getElementById('createDiv').style.display='flex'; }
-function showLogin(){ hideAll(); document.getElementById('loginDiv').style.display='flex'; }
-function backToWelcome(){ hideAll(); document.getElementById('welcomeDiv').style.display='flex'; }
-function hideAll(){
-  document.getElementById('welcomeDiv').style.display='none';
-  document.getElementById('createDiv').style.display='none';
-  document.getElementById('loginDiv').style.display='none';
-  document.getElementById('profileDiv').style.display='none';
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+window.showSignup = function() {
+  document.getElementById("auth").style.display="none";
+  document.getElementById("signup").style.display="block";
 }
 
-// Create Account
-function createAccount(){
-  var email = document.getElementById('createEmail').value;
-  var pass = document.getElementById('createPass').value;
-  if(!email || !pass){ alert('Enter email and password'); return; }
-  firebase.auth().createUserWithEmailAndPassword(email,pass)
-  .then(userCredential=>{
-    var uid = userCredential.user.uid;
-    localStorage.setItem('uid', uid);
-    localStorage.setItem('email', email);
-    firebase.database().ref('Users/'+uid).set({email:email,lastSeen:new Date().toISOString()});
-    loadProfile(uid,email);
-  })
-  .catch(err=>alert(err.message));
+window.signup = async function() {
+  const email = signupEmail.value;
+  const password = signupPassword.value;
+  const userCredential = await createUserWithEmailAndPassword(auth,email,password);
+  await setDoc(doc(db,"users",userCredential.user.uid),{
+    username: email,
+    photoURL: ""
+  });
 }
 
-// Login
-function loginUser(){
-  var email = document.getElementById('loginEmail').value;
-  var pass = document.getElementById('loginPass').value;
-  if(!email || !pass){ alert('Enter email and password'); return; }
-  firebase.auth().signInWithEmailAndPassword(email,pass)
-  .then(userCredential=>{
-    var uid = userCredential.user.uid;
-    localStorage.setItem('uid', uid);
-    localStorage.setItem('email', email);
-    firebase.database().ref('Users/'+uid+'/lastSeen').set(new Date().toISOString());
-    loadProfile(uid,email);
-  })
-  .catch(err=>alert(err.message));
+window.login = async function() {
+  await signInWithEmailAndPassword(auth,email.value,password.value);
 }
 
-// Forgot password
-function forgotPassword(){
-  var email = prompt('Enter your registered email:');
-  if(email){
-    firebase.auth().sendPasswordResetEmail(email)
-    .then(()=>alert('Reset link sent to email'))
-    .catch(err=>alert(err.message));
+onAuthStateChanged(auth, async (user)=>{
+  if(user){
+    auth.style.display="none";
+    signup.style.display="none";
+    profile.style.display="block";
+
+    const docSnap = await getDoc(doc(db,"users",user.uid));
+    if(docSnap.exists()){
+      username.value = docSnap.data().username;
+      if(docSnap.data().photoURL){
+        profileImage.src = docSnap.data().photoURL;
+      }
+    }
   }
+});
+
+window.uploadImage = function(){
+  imageInput.click();
 }
 
-// Load profile
-function loadProfile(uid,email){
-  hideAll();
-  document.getElementById('profileDiv').style.display='flex';
-  document.getElementById('profileEmail').innerText=email;
-  document.getElementById('profileUID').innerText=uid;
+imageInput.addEventListener("change", async ()=>{
+  const file = imageInput.files[0];
+  const storageRef = ref(storage,"profiles/"+auth.currentUser.uid);
+  await uploadBytes(storageRef,file);
+  const url = await getDownloadURL(storageRef);
+  profileImage.src = url;
+  await setDoc(doc(db,"users",auth.currentUser.uid),{
+    username: username.value,
+    photoURL: url
+  });
+});
+
+window.saveProfile = async function(){
+  await setDoc(doc(db,"users",auth.currentUser.uid),{
+    username: username.value,
+    photoURL: profileImage.src
+  });
+  alert("Profile Updated");
 }
 
-// Logout
-function logout(){
-  localStorage.removeItem('uid');
-  localStorage.removeItem('email');
-  firebase.auth().signOut();
-  backToWelcome();
+window.logout = function(){
+  signOut(auth);
+  location.reload();
 }
-
-// Check localStorage on load
-window.onload = function(){
-  var uid = localStorage.getItem('uid');
-  var email = localStorage.getItem('email');
-  if(uid && email){
-    loadProfile(uid,email);
-  } else {
-    backToWelcome();
-  }
-};
 </script>
+
 </body>
 </html>
