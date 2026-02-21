@@ -11,6 +11,7 @@
             --card-bg: rgba(20, 20, 20, 0.95);
             --accent-cyan: #00f2ff;
             --text-main: #ffffff;
+            --error-red: #ff4b2b;
         }
 
         body { 
@@ -24,6 +25,21 @@
             border: 1px solid rgba(0, 242, 255, 0.2); width: 90%; max-width: 380px; text-align: center;
             backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
+
+        /* --- Custom Modal Styles --- */
+        #custom-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; align-items: center; 
+            justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        #custom-modal.active { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: #0a0a0a; border: 2px solid var(--accent-cyan);
+            padding: 25px; border-radius: 10px; width: 300px; text-align: center;
+            box-shadow: 0 0 20px var(--accent-cyan);
+        }
+        .modal-header { font-family: 'Orbitron'; font-size: 0.9rem; color: var(--accent-cyan); margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .modal-body { font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5; }
 
         .hidden { display: none !important; }
         h2, h3 { font-family: 'Orbitron', sans-serif; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 2px; }
@@ -58,7 +74,7 @@
         
         .btn-primary { background: var(--accent-cyan); color: #000; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
         .btn-edit { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); margin-top: 20px;}
-        .btn-logout { background: none; color: #ff4b2b; font-size: 0.8rem; border: none; margin-top: 15px; }
+        .btn-logout { background: none; color: var(--error-red); font-size: 0.8rem; border: none; margin-top: 15px; }
 
         #loader { font-family: 'Orbitron'; color: var(--accent-cyan); }
     </style>
@@ -66,6 +82,14 @@
 <body>
 
     <div id="loader">INITIALIZING SYSTEM...</div>
+
+    <div id="custom-modal">
+        <div class="modal-content">
+            <div id="modal-title" class="modal-header">NETWORK NOTIFICATION</div>
+            <div id="modal-msg" class="modal-body">Message goes here...</div>
+            <button onclick="closeModal()" class="btn-primary" style="padding: 8px; font-size: 0.7rem;">ACKNOWLEDGE</button>
+        </div>
+    </div>
 
     <div id="auth-card" class="card hidden">
         <h2>Access Portal</h2>
@@ -120,6 +144,18 @@
         const loader = document.getElementById('loader');
         const authCard = document.getElementById('auth-card');
         const profileCard = document.getElementById('profile-card');
+        const emailInput = document.getElementById('email');
+        const passInput = document.getElementById('password');
+
+        // Modal Logic
+        window.showNotice = (title, msg) => {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-msg').innerText = msg;
+            document.getElementById('custom-modal').classList.add('active');
+        };
+        window.closeModal = () => {
+            document.getElementById('custom-modal').classList.remove('active');
+        };
 
         // Monitor Auth State
         onAuthStateChanged(auth, (user) => {
@@ -139,11 +175,24 @@
 
         // Auth Actions
         document.getElementById('login-btn').onclick = () => {
-            signInWithEmailAndPassword(auth, email.value, password.value).catch(e => alert(e.message));
+            signInWithEmailAndPassword(auth, emailInput.value, passInput.value).catch(e => showNotice("AUTH ERROR", e.message));
         };
+
         document.getElementById('signup-btn').onclick = () => {
-            createUserWithEmailAndPassword(auth, email.value, password.value).catch(e => alert(e.message));
+            createUserWithEmailAndPassword(auth, emailInput.value, passInput.value).catch(e => showNotice("AUTH ERROR", e.message));
         };
+
+        document.getElementById('forgot-password').onclick = () => {
+            const emailValue = emailInput.value;
+            if (!emailValue) {
+                showNotice("NETWORK", "Please enter your email address first.");
+                return;
+            }
+            sendPasswordResetEmail(auth, emailValue)
+                .then(() => showNotice("USEAS NETWORK", "ACCESS GRANTED: Password reset link has been sent to your email check in spam."))
+                .catch(e => showNotice("NETWORK ERROR", e.message));
+        };
+
         document.getElementById('logout-btn').onclick = () => signOut(auth);
 
         // Avatar Select Logic
@@ -161,9 +210,9 @@
             const newName = document.getElementById('edit-name-input').value;
             try {
                 await updateProfile(user, { displayName: newName || user.displayName, photoURL: selectedAvatarUrl });
-                alert("Profile Updated!");
-                location.reload();
-            } catch (e) { alert(e.message); }
+                showNotice("SYSTEM", "Profile Updated Successfully!");
+                setTimeout(() => location.reload(), 2000);
+            } catch (e) { showNotice("SYSTEM ERROR", e.message); }
         };
 
         // UI Toggles
@@ -171,10 +220,12 @@
             document.getElementById('edit-box').classList.toggle('hidden');
             this.innerText = document.getElementById('edit-box').classList.contains('hidden') ? "Edit Profile" : "Cancel";
         };
+
         document.getElementById('toggle-text').onclick = function() {
             const isLogin = !document.getElementById('login-btn').classList.contains('hidden');
             document.getElementById('login-btn').classList.toggle('hidden');
             document.getElementById('signup-btn').classList.toggle('hidden');
+            document.getElementById('forgot-password').classList.toggle('hidden');
             this.innerText = isLogin ? "Have an account? Login" : "New User? Register";
         };
     </script>
